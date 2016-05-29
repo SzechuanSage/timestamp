@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" ng-app>
+  <head>
+    <title>Timestamp Microservice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
+    <link rel="stylesheet" href="/css/timestamp.css" type="text/css">
+    </style>
+  </head>
+  <body>
+    <h1 class="title">Timestamp Microservice</h1>
+    <div class=userStories>
+      <h3>User Stories</h3>
+      <ul>
+        <li>I can pass a string as a parameter, and it will check to see whether 
+        that string contains either a unix timestamp or a natural language date 
+        (example: January 1, 2016)</li>
+        <li>If it does, it returns both the Unix timestamp and the natural 
+        language form of that date.</li>
+        <li>If it does not contain a date or Unix timestamp, it returns null for
+        those properties.</li>
+      </ul>
+    </div>
+    <h3>Example usage:</h3>
+    <div class="sampleText">
+      <p>https://timestamp-ms.herokuapp.com/December%2015,%202015</p>
+      <p>https://timestamp-ms.herokuapp.com/987654321</p>
+    </div>
+    <h3>Example output:</h3>
+    <div class="sampleText">
+      <p>"unix": 987654321, "natural": "April 19, 2001"</p>
+    </div>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/angular.min.js"></script>
+  </body>
+</html>
