@@ -10,8 +10,19 @@ router.use(function(req,res) {
     res.end(JSON.stringify(timeStamp))
 })
 
-function getTimeStamp (input) {
+var getTimeStamp = function (input) {
     var unix, naturalDate
+
+    var main = function() {
+        var cleanedInput = cleanInput()
+        var result = null
+        if (isValidUnix(cleanedInput)) {
+            result = processValidUnix(cleanedInput)
+        } else {
+            result = processNaturalDate(cleanedInput)
+        }
+        return result
+    }
 
     var cleanInput = function() {
         return decodeURI(input).trim()
@@ -21,6 +32,16 @@ function getTimeStamp (input) {
         return unixString.match(/^[+-]?[0-9\.]*$/)
     }
 
+    var processValidUnix = function(validUnix) {
+        unix = Number(validUnix)
+        if (isNaN(unix))
+            return badTimeStamp
+        else
+            return goodTimeStamp()
+    }
+
+    var badTimeStamp = {unix: null, natural: null}
+
     var goodTimeStamp = function() {
         var date = new Date(unix * 1000)
         var month = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -29,56 +50,73 @@ function getTimeStamp (input) {
         return {unix: unix, natural: naturalDate}
     }
 
-    var badTimeStamp = {unix: null, natural: null}
-
-    var cleanedInput = cleanInput()
-
-    if (isValidUnix(cleanedInput)) {
-        unix = Number(cleanedInput)
-        if (isNaN(unix))
+    var processNaturalDate = function(dateString) {
+        var matchDate = dateString.match(/\W*(\w*)\W*(\w*)\W*(\w*)/)
+        
+        var inputMonth = matchDate[1].toLowerCase().slice(0,3)
+        var numericMonth = getZeroBasedNumericMonth(inputMonth)
+        if (isInvalidMonth(numericMonth))
             return badTimeStamp
-        else
-            return goodTimeStamp()
+        
+        var inputDay = matchDate[2]
+        var numericDay = parseInt(inputDay)
+        if (isInvalidDay(numericDay))
+            return badTimeStamp
+        
+        var inputYear = matchDate[3]
+        var numericYear = getNumericYear(inputYear)
+        if (isInvalidYear(numericYear))
+            return badTimeStamp
+
+        unix = Date.UTC(numericYear, numericMonth, numericDay) / 1000
+        return goodTimeStamp()
     }
 
-    var parseMonth = function() {
-        var numericMonth = 0
+    var getZeroBasedNumericMonth = function(inputMonth) {
         if (inputMonth.length === 3) {
             var shortMonth = ['jan','feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
             numericMonth = shortMonth.indexOf(inputMonth)
-            if (numericMonth > -1)
-                return numericMonth
         }
-        numericMonth = parseInt(inputMonth)
-        if (numericMonth >= 1 && numericMonth <= 12) { return (numericMonth - 1) }
-        return null
+        else {
+            numericMonth = parseInt(inputMonth) - 1
+        }
+    
+        return numericMonth
     }
 
-    var matchDate = cleanedInput.match(/\W*(\w*)\W*(\w*)\W*(\w*)/)
-    var inputMonth = matchDate[1].toLowerCase().slice(0,3)
-    var inputDay = matchDate[2]
-    var inputYear = matchDate[3]
-
-    var numericMonth = parseMonth()
-    if (numericMonth === null) { return badTimeStamp }
-
-    var numericDay = parseInt(inputDay)
-    if (isNaN(numericDay)) { return badTimeStamp }
-    if (numericDay < 1 || numericDay > 31) { return badTimeStamp }
-
-    var numericYear = 0;
-    if (inputYear.length === 0) {
-        numericYear = 1
+    var isInvalidMonth = function(numericMonth) {
+        if (isNaN(numericMonth)) { return true }
+        if (numericMonth < 0) { return true }
+        if (numericMonth > 11) { return true }
+        return false
     }
-    else {
-        numericYear = parseInt(inputYear)
-    }
-    if (isNaN(numericYear)) { return badTimeStamp }
-    if (numericYear >= 0 && numericYear <= 49) { numericYear += 2000 }
-    if (numericYear >= 50 && numericYear <= 99) { numericYear += 1900 }
 
-    unix = Date.UTC(numericYear, numericMonth, numericDay) / 1000
-    return goodTimeStamp()
+    var isInvalidDay = function(numericDay) {
+        if (isNaN(numericDay)) { return true }
+        if (numericDay < 1) { return true }
+        if (numericDay > 31) { return true }
+        return false
+    }
+
+    var getNumericYear = function(inputYear) {
+        var numericYear = 0;
+        if (inputYear.length === 0) {
+            numericYear = 1
+        }
+        else {
+            numericYear = parseInt(inputYear)
+        }
+
+        if (numericYear >= 0 && numericYear <= 49) { numericYear += 2000 }
+        if (numericYear >= 50 && numericYear <= 99) { numericYear += 1900 }
+        return numericYear
+    }
+
+    var isInvalidYear = function(numericYear) {
+        return (isNaN(numericYear))
+    }
+
+    return main()
 }
 
 router.listen(process.env.PORT || 3000);
